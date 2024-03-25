@@ -1,0 +1,157 @@
+import json
+import re
+import plugins
+from bridge.reply import Reply, ReplyType
+from bridge.context import ContextType
+from channel.chat_message import ChatMessage
+from plugins import *
+from common.log import logger
+from common.tmp_dir import TmpDir
+
+import os
+import uuid
+from suno import SongsGen
+import os
+import uuid
+from glob import glob
+
+@plugins.register(
+    name="sunoplayer",
+    desire_priority=2,
+    desc="A plugin to call suno API",
+    version="0.0.1",
+    author="davexxx",
+)
+
+class sunoplayer(Plugin):
+    def __init__(self):
+        super().__init__()
+        try:
+            curdir = os.path.dirname(__file__)
+            config_path = os.path.join(curdir, "config.json")
+            if os.path.exists(config_path):
+                with open(config_path, "r", encoding="utf-8") as f:
+                    self.config = json.load(f)
+            else:
+                # 使用父类的方法来加载配置
+                self.config = super().load_config()
+
+                if not self.config:
+                    raise Exception("config.json not found")
+            
+            # 设置事件处理函数
+            self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
+            # 从配置中提取所需的设置
+            self.cookie = self.config.get("cookie","")
+            self.show_lyc = self.config.get("show_lyc",False)
+            self.suno_prefix = self.config.get("suno_prefix", "suno")
+
+            # 初始化成功日志
+            logger.info("[sunoplayer] inited.")
+        except Exception as e:
+            # 初始化失败日志
+            logger.warn(f"sunoplayer init failed: {e}")
+    def on_handle_context(self, e_context: EventContext):
+        context = e_context["context"]
+        if context.type not in [ContextType.TEXT, ContextType.SHARING,ContextType.FILE,ContextType.IMAGE]:
+            return
+        msg: ChatMessage = e_context["context"]["msg"]
+        content = context.content
+
+        if e_context['context'].type == ContextType.TEXT:
+            if content.startswith(self.suno_prefix):
+                # Call new function to handle search operation
+                pattern = self.suno_prefix + r"\s(.+)"
+                match = re.match(pattern, content)
+                if match: ##   匹配上了suno的指令
+                    logger.info("calling suno service")
+                    prompt = content[len(self.suno_prefix):].strip()
+                    logger.info(f"suno prompt = : {prompt}")
+                    self.call_suno_service(prompt, e_context)
+                else:
+                    tip = f"💡欢迎使用suno服务，suno指令格式为:\n\n{self.suno_prefix}+ 空格 + 对歌曲的描述(支持中文)，例如：{self.suno_prefix} a blue cyber dream song"
+
+                reply = Reply(type=ReplyType.TEXT, content= tip)
+                e_context["reply"] = reply
+                e_context.action = EventAction.BREAK_PASS
+
+    def call_suno_service(self, prompt, e_context):
+        cookie_str =f'{self.cookie}'
+
+        output_dir = self.generate_unique_output_directory(TmpDir().path())
+        logger.info(f"output dir = {output_dir}")
+        song_detail = prompt
+
+        i = SongsGen(cookie_str)  # Now 'cookie_str' is properly formatted as a Python string
+        logger.info(f"credit left =  {i.get_limit_left()} ")
+        i.save_songs(song_detail, output_dir)
+
+        # 查找 output_dir 中的 mp3 文件，这里假设每次调用只产生一个 mp3
+        mp3_files = glob(os.path.join(output_dir, '*.mp3'))
+        if mp3_files:
+            mp3_file_path = mp3_files[0]
+            if self.is_valid_file(mp3_file_path):
+                logger.info("The MP3 file is valid.")
+                rt = ReplyType.VOICE
+                rc = mp3_file_path
+
+            else:
+                rt = ReplyType.TEXT
+                rc = "生成失败"
+                logger.info("The MP3 file is invalid or incomplete.")
+
+            reply = Reply(rt, rc)
+            e_context["reply"] = reply
+            e_context.action = EventAction.BREAK_PASS
+        else:
+            logger.info("No MP3 files found in the output directory.")
+            rt = ReplyType.TEXT
+            rc = "生成失败，服务不可用"
+            reply = Reply(rt, rc)
+            e_context["reply"] = reply
+            e_context.action = EventAction.BREAK_PASS
+
+        # 查找 output_dir 中的 lrc 文件，这里我们不需要文件名
+        lrc_files = self.find_lrc_files(output_dir)
+        if lrc_files:
+            logger.info("LRC file found.")
+            if(self.show_lyc):
+                lrc_file_path = lrc_files[0]
+                msg = self.print_file_contents(lrc_file_path)
+                self.send_reply(msg, e_context)
+
+        else:
+            logger.info("No LRC files found in the output directory.")
+
+    def is_valid_file(self, file_path, min_size=512*1024):  # 500KB
+        """Check if the file exists and is greater than a given minimum size in bytes."""
+        return os.path.exists(file_path) and os.path.getsize(file_path) > min_size
+
+    def find_lrc_files(self, directory):
+        """Find the first .lrc file in a directory."""
+        lrc_files = glob(os.path.join(directory, '*.lrc'))
+        return lrc_files[0] if lrc_files else None
+
+    def generate_unique_output_directory(self, base_dir):
+        """Generate a unique output directory using a UUID."""
+        unique_dir = os.path.join(base_dir, str(uuid.uuid4()))
+        os.makedirs(unique_dir, exist_ok=True)
+        return unique_dir
+
+    def print_file_contents(self, file_path):
+        """Read and print the contents of the file."""
+        with open(file_path, 'r', encoding='utf-8') as file:
+            return file.read()
+        
+    def send_reply(self, reply, e_context: EventContext, reply_type=ReplyType.TEXT):
+        if isinstance(reply, Reply):
+            if not reply.type and reply_type:
+                reply.type = reply_type
+        else:
+            reply = Reply(reply_type, reply)
+        channel = e_context['channel']
+        context = e_context['context']
+        # reply的包装步骤
+        rd = channel._decorate_reply(context, reply)
+        # reply的发送步骤
+        return channel._send_reply(context, rd)
