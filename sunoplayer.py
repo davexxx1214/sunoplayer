@@ -69,11 +69,11 @@ class sunoplayer(Plugin):
                     logger.info(f"suno prompt = : {prompt}")
                     self.call_suno_service(prompt, e_context)
                 else:
-                    tip = f"💡欢迎使用suno服务，suno指令格式为:\n\n{self.suno_prefix}+ 空格 + 对歌曲的描述(支持中文)，例如：{self.suno_prefix} a blue cyber dream song"
-
-                reply = Reply(type=ReplyType.TEXT, content= tip)
-                e_context["reply"] = reply
-                e_context.action = EventAction.BREAK_PASS
+                    tip = f"💡欢迎使用Suno V3服务，指令格式为:\n\n{self.suno_prefix}+ 空格 + 对歌曲的描述(支持中文)，例如：{self.suno_prefix} a blue cyber dream song"
+                    reply = Reply(type=ReplyType.TEXT, content= tip)
+                    e_context["reply"] = reply
+                    e_context.action = EventAction.BREAK_PASS
+                
 
     def call_suno_service(self, prompt, e_context):
         cookie_str =f'{self.cookie}'
