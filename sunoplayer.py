@@ -112,11 +112,10 @@ class sunoplayer(Plugin):
             e_context.action = EventAction.BREAK_PASS
 
         # 查找 output_dir 中的 lrc 文件，这里我们不需要文件名
-        lrc_files = self.find_lrc_files(output_dir)
-        if lrc_files:
-            logger.info("LRC file found.")
+        lrc_file_path  = self.find_lrc_files(output_dir)
+        if lrc_file_path :
+            logger.info("LRC file found. path = {lrc_file_path }")
             if(self.show_lyc):
-                lrc_file_path = lrc_files[0]
                 msg = self.print_file_contents(lrc_file_path)
                 self.send_reply(msg, e_context)
 
