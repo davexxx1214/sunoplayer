@@ -67,7 +67,14 @@ class sunoplayer(Plugin):
                     logger.info("calling suno service")
                     prompt = content[len(self.suno_prefix):].strip()
                     logger.info(f"suno prompt = : {prompt}")
-                    self.call_suno_service(prompt, e_context)
+                    try:
+                        self.call_suno_service(prompt, e_context)
+                    except Exception as e:
+                        rt = ReplyType.TEXT
+                        rc = "服务器出现异常，服务暂不可用"
+                        reply = Reply(rt, rc)
+                        e_context["reply"] = reply
+                        e_context.action = EventAction.BREAK_PASS
                 else:
                     tip = f"💡欢迎使用写歌服务，指令格式为:\n\n{self.suno_prefix}+ 空格 + 对歌曲的描述(支持中文)，例如:\n{self.suno_prefix} 一首浪漫的情歌"
                     reply = Reply(type=ReplyType.TEXT, content= tip)
