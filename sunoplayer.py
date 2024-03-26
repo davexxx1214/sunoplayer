@@ -93,7 +93,7 @@ class sunoplayer(Plugin):
             e_context.action = EventAction.BREAK_PASS
             return
 
-        tip = '您的作曲之旅已经启航，让我们的音乐小精灵带上您的歌词飞向创意的宇宙！稍等个2~5分钟，您的个人音乐风暴就会随着节拍轻轻降落。准备好一起摇摆吧！🚀'
+        tip = '您的作曲之旅已经启航，让我们的音乐小精灵带上您的歌词飞向创意的宇宙！请耐心等待2~5分钟，您的个人音乐风暴就会随着节拍轻轻降落。准备好一起摇摆吧！🚀'
         self.send_reply(tip, e_context)
 
         i.save_songs(song_detail, output_dir)
