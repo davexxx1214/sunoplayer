@@ -69,7 +69,7 @@ class sunoplayer(Plugin):
                     logger.info(f"suno prompt = : {prompt}")
                     self.call_suno_service(prompt, e_context)
                 else:
-                    tip = f"💡欢迎使用Suno V3服务，指令格式为:\n\n{self.suno_prefix}+ 空格 + 对歌曲的描述(支持中文)，例如：{self.suno_prefix} a blue cyber dream song"
+                    tip = f"💡欢迎使用写歌服务，指令格式为:\n\n{self.suno_prefix}+ 空格 + 对歌曲的描述(支持中文)，例如：{self.suno_prefix} 一首浪漫的情歌"
                     reply = Reply(type=ReplyType.TEXT, content= tip)
                     e_context["reply"] = reply
                     e_context.action = EventAction.BREAK_PASS
@@ -84,6 +84,15 @@ class sunoplayer(Plugin):
 
         i = SongsGen(cookie_str)  # Now 'cookie_str' is properly formatted as a Python string
         logger.info(f"credit left =  {i.get_limit_left()} ")
+        if i.get_limit_left() < 1:
+            logger.info("No enough credit left.")
+            rt = ReplyType.TEXT
+            rc = "账户额度不够，请联系管理员"
+            reply = Reply(rt, rc)
+            e_context["reply"] = reply
+            e_context.action = EventAction.BREAK_PASS
+            return
+
         i.save_songs(song_detail, output_dir)
 
         # 查找 output_dir 中的 mp3 文件，这里假设每次调用只产生一个 mp3
@@ -92,8 +101,9 @@ class sunoplayer(Plugin):
             mp3_file_path = mp3_files[0]
             if self.is_valid_file(mp3_file_path):
                 logger.info("The MP3 file is valid.")
+                newfilepath = self.rename_file(mp3_file_path, prompt)
                 rt = ReplyType.VOICE
-                rc = mp3_file_path
+                rc = newfilepath
 
             else:
                 rt = ReplyType.TEXT
@@ -154,3 +164,28 @@ class sunoplayer(Plugin):
         rd = channel._decorate_reply(context, reply)
         # reply的发送步骤
         return channel._send_reply(context, rd)
+    
+    def rename_file(self, filepath, prompt):
+        # 提取目录路径和扩展名
+        dir_path, filename = os.path.split(filepath)
+        file_ext = os.path.splitext(filename)[1]
+
+        # 移除prompt中的标点符号和空格
+        cleaned_content = re.sub(r'[^\w]', '', prompt)
+        # 截取prompt的前10个字符
+        content_prefix = cleaned_content[:10]
+                
+        # 组装新的文件名
+        new_filename = f"{content_prefix}"
+
+        # 拼接回完整的新文件路径
+        new_filepath = os.path.join(dir_path, new_filename + file_ext)
+
+        # 重命名原文件
+        try:
+            os.rename(filepath, new_filepath)
+        except OSError as e:
+            logger.error(f"Error: {e.strerror}")
+            return filepath
+
+        return new_filepath
