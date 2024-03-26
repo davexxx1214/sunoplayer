@@ -71,7 +71,7 @@ class sunoplayer(Plugin):
                         self.call_suno_service(prompt, e_context)
                     except Exception as e:
                         rt = ReplyType.TEXT
-                        rc = "服务器过于火爆，服务暂不可用"
+                        rc = "服务暂不可用,可能是某些词汇没有通过安全审查"
                         reply = Reply(rt, rc)
                         e_context["reply"] = reply
                         e_context.action = EventAction.BREAK_PASS
