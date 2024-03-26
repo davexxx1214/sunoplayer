@@ -93,6 +93,9 @@ class sunoplayer(Plugin):
             e_context.action = EventAction.BREAK_PASS
             return
 
+        tip = '您的任务已经提交，请等待2~5分钟生成结果'
+        self.send_reply(tip, e_context)
+
         i.save_songs(song_detail, output_dir)
 
         # 查找 output_dir 中的 mp3 文件，这里假设每次调用只产生一个 mp3
