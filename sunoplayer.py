@@ -69,7 +69,7 @@ class sunoplayer(Plugin):
                     logger.info(f"suno prompt = : {prompt}")
                     self.call_suno_service(prompt, e_context)
                 else:
-                    tip = f"💡欢迎使用写歌服务，指令格式为:\n\n{self.suno_prefix}+ 空格 + 对歌曲的描述(支持中文)，例如：{self.suno_prefix} 一首浪漫的情歌"
+                    tip = f"💡欢迎使用写歌服务，指令格式为:\n\n{self.suno_prefix}+ 空格 + 对歌曲的描述(支持中文)，例如:\n{self.suno_prefix} 一首浪漫的情歌"
                     reply = Reply(type=ReplyType.TEXT, content= tip)
                     e_context["reply"] = reply
                     e_context.action = EventAction.BREAK_PASS
