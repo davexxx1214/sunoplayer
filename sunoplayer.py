@@ -89,7 +89,7 @@ class sunoplayer(Plugin):
                 if match: ##   匹配上了custom的指令
                     logger.info("calling custom suno service")
                     prompt = content[len(self.custom_suno_prefix):].strip()
-                    logger.info(f"custom suno prompt = : {prompt}")
+                    logger.info(f"custom suno prompt =  {prompt}")
                     try:
                         custom = True
                         self.call_suno_service(prompt, custom, e_context)
@@ -128,7 +128,7 @@ class sunoplayer(Plugin):
         self.send_reply(tip, e_context)
 
         if custom:
-            i.save_songs(song_detail, output_dir=output_dir, is_custom=True,title='歌词:') 
+            i.save_songs(song_detail, output_dir, is_custom=True,title='歌词') 
         else:
             i.save_songs(song_detail, output_dir)
 
