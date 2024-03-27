@@ -71,6 +71,7 @@ class sunoplayer(Plugin):
                         custom = False
                         self.call_suno_service(prompt,custom, e_context)
                     except Exception as e:
+                        logger.error("create song error: {}".format(e))
                         rt = ReplyType.TEXT
                         rc = "服务暂不可用,可能是某些词汇没有通过安全审查"
                         reply = Reply(rt, rc)
@@ -94,6 +95,7 @@ class sunoplayer(Plugin):
                         custom = True
                         self.call_suno_service(prompt, custom, e_context)
                     except Exception as e:
+                        logger.error("create song error: {}".format(e))
                         rt = ReplyType.TEXT
                         rc = "服务暂不可用,可能是某些词汇没有通过安全审查"
                         reply = Reply(rt, rc)
@@ -128,8 +130,10 @@ class sunoplayer(Plugin):
         self.send_reply(tip, e_context)
 
         if custom:
-            i.save_songs(song_detail, output_dir, is_custom=True,title='歌词') 
+            logger.info("custom mode")
+            i.save_songs(song_detail, output_dir, is_custom=True, title='歌词') 
         else:
+            logger.info("theme mode")
             i.save_songs(song_detail, output_dir)
 
 
