@@ -88,7 +88,7 @@ class sunoplayer(Plugin):
                 match = re.match(pattern, content)
                 if match: ##   匹配上了custom的指令
                     logger.info("calling custom suno service")
-                    prompt = content[len(self.suno_prefix):].strip()
+                    prompt = content[len(self.custom_suno_prefix):].strip()
                     logger.info(f"custom suno prompt = : {prompt}")
                     try:
                         custom = True
@@ -100,7 +100,7 @@ class sunoplayer(Plugin):
                         e_context["reply"] = reply
                         e_context.action = EventAction.BREAK_PASS
                 else:
-                    tip = f"💡欢迎使用填词作曲服务，指令格式为:\n\n{self.custom_suno_prefix}+ 空格 + 完整歌词，例如:\n{self.suno_prefix} 在沉默的夜，星辰轻语，梦开始起航，穿越寂寞沙漠\n或者:\n{self.suno_prefix} Whispers of night, where stars gently sigh, Dreams set to sail, cross the lonely sky"
+                    tip = f"💡欢迎使用填词作曲服务，指令格式为:\n\n{self.custom_suno_prefix}+ 空格 + 完整歌词，例如:\n{self.custom_suno_prefix} 在沉默的夜，星辰轻语，梦开始起航，穿越寂寞沙漠\n或者:\n{self.custom_suno_prefix} Whispers of night, where stars gently sigh, Dreams set to sail, cross the lonely sky"
                     reply = Reply(type=ReplyType.TEXT, content= tip)
                     e_context["reply"] = reply
                     e_context.action = EventAction.BREAK_PASS
