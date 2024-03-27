@@ -45,6 +45,7 @@ class sunoplayer(Plugin):
             self.cookie = self.config.get("cookie","")
             self.show_lyc = self.config.get("show_lyc",False)
             self.suno_prefix = self.config.get("suno_prefix", "suno")
+            self.custom_suno_prefix = self.config.get("custom_suno_prefix", "custom")
 
             # 初始化成功日志
             logger.info("[sunoplayer] inited.")
@@ -55,7 +56,6 @@ class sunoplayer(Plugin):
         context = e_context["context"]
         if context.type not in [ContextType.TEXT, ContextType.SHARING,ContextType.FILE,ContextType.IMAGE]:
             return
-        msg: ChatMessage = e_context["context"]["msg"]
         content = context.content
 
         if e_context['context'].type == ContextType.TEXT:
@@ -68,7 +68,8 @@ class sunoplayer(Plugin):
                     prompt = content[len(self.suno_prefix):].strip()
                     logger.info(f"suno prompt = : {prompt}")
                     try:
-                        self.call_suno_service(prompt, e_context)
+                        custom = False
+                        self.call_suno_service(prompt,custom, e_context)
                     except Exception as e:
                         rt = ReplyType.TEXT
                         rc = "服务暂不可用,可能是某些词汇没有通过安全审查"
@@ -76,13 +77,36 @@ class sunoplayer(Plugin):
                         e_context["reply"] = reply
                         e_context.action = EventAction.BREAK_PASS
                 else:
-                    tip = f"💡欢迎使用写歌服务，指令格式为:\n\n{self.suno_prefix}+ 空格 + 对歌曲的描述(支持中文)，例如:\n{self.suno_prefix} 一首浪漫的情歌"
+                    tip = f"💡欢迎使用写歌服务，指令格式为:\n\n{self.suno_prefix}+ 空格 + 对歌曲主题的描述(控制在30个字之内)，例如:\n{self.suno_prefix} 一首浪漫的情歌\n或者:\n{self.suno_prefix} a blue cyber dream song"
+                    reply = Reply(type=ReplyType.TEXT, content= tip)
+                    e_context["reply"] = reply
+                    e_context.action = EventAction.BREAK_PASS
+
+            if content.startswith(self.custom_suno_prefix):
+                # Call new function to handle search operation
+                pattern = self.custom_suno_prefix + r"\s(.+)"
+                match = re.match(pattern, content)
+                if match: ##   匹配上了custom的指令
+                    logger.info("calling custom suno service")
+                    prompt = content[len(self.suno_prefix):].strip()
+                    logger.info(f"custom suno prompt = : {prompt}")
+                    try:
+                        custom = True
+                        self.call_suno_service(prompt, custom, e_context)
+                    except Exception as e:
+                        rt = ReplyType.TEXT
+                        rc = "服务暂不可用,可能是某些词汇没有通过安全审查"
+                        reply = Reply(rt, rc)
+                        e_context["reply"] = reply
+                        e_context.action = EventAction.BREAK_PASS
+                else:
+                    tip = f"💡欢迎使用填词作曲服务，指令格式为:\n\n{self.custom_suno_prefix}+ 空格 + 完整歌词，例如:\n{self.suno_prefix} 在沉默的夜，星辰轻语，梦开始起航，穿越寂寞沙漠\n或者:\n{self.suno_prefix} Whispers of night, where stars gently sigh, Dreams set to sail, cross the lonely sky"
                     reply = Reply(type=ReplyType.TEXT, content= tip)
                     e_context["reply"] = reply
                     e_context.action = EventAction.BREAK_PASS
                 
 
-    def call_suno_service(self, prompt, e_context):
+    def call_suno_service(self, prompt, custom, e_context):
         cookie_str =f'{self.cookie}'
 
         output_dir = self.generate_unique_output_directory(TmpDir().path())
@@ -103,7 +127,11 @@ class sunoplayer(Plugin):
         tip = '您的作曲之旅已经启航，让我们的音乐小精灵带上您的歌词飞向创意的宇宙！请耐心等待2~5分钟，您的个人音乐风暴就会随着节拍轻轻降落。准备好一起摇摆吧！🚀'
         self.send_reply(tip, e_context)
 
-        i.save_songs(song_detail, output_dir)
+        if custom:
+            i.save_songs(song_detail, output_dir=output_dir, is_custom=True,title='歌词:') 
+        else:
+            i.save_songs(song_detail, output_dir)
+
 
         # 查找 output_dir 中的 mp3 文件，这里假设每次调用只产生一个 mp3
         mp3_files = glob(os.path.join(output_dir, '*.mp3'))
