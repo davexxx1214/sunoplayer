@@ -78,7 +78,7 @@ class sunoplayer(Plugin):
                         e_context["reply"] = reply
                         e_context.action = EventAction.BREAK_PASS
                 else:
-                    tip = f"💡欢迎使用写歌服务，指令格式为:\n\n{self.suno_prefix}+ 空格 + 对歌曲主题的描述(控制在30个字之内)，例如:\n{self.suno_prefix} 一首浪漫的情歌\n或者:\n{self.suno_prefix} a blue cyber dream song"
+                    tip = f"💡欢迎使用写歌服务，指令格式为:\n\n{self.suno_prefix}+ 空格 + 对歌曲主题的描述(控制在30个字之内)\n例如:\n{self.suno_prefix} 一首浪漫的情歌\n或者:\n{self.suno_prefix} a blue cyber dream song"
                     reply = Reply(type=ReplyType.TEXT, content= tip)
                     e_context["reply"] = reply
                     e_context.action = EventAction.BREAK_PASS
@@ -102,7 +102,7 @@ class sunoplayer(Plugin):
                         e_context["reply"] = reply
                         e_context.action = EventAction.BREAK_PASS
                 else:
-                    tip = f"💡欢迎使用填词作曲服务，指令格式为:\n\n{self.custom_suno_prefix}+ 空格 + 完整歌词\n例如:\n\n{self.custom_suno_prefix} 在沉默的夜，星辰轻语，梦开始起航，穿越寂寞沙漠\n或者:\n\n{self.custom_suno_prefix} Whispers of night, where stars gently sigh, Dreams set to sail, cross the lonely sky"
+                    tip = f"💡欢迎使用填词作曲服务，指令格式为:\n\n{self.custom_suno_prefix}+ 空格 + 完整歌词\n例如:\n{self.custom_suno_prefix} 在沉默的夜，星辰轻语，梦开始起航，穿越寂寞沙漠\n或者:\n{self.custom_suno_prefix} Whispers of night, where stars gently sigh, Dreams set to sail, cross the lonely sky"
                     reply = Reply(type=ReplyType.TEXT, content= tip)
                     e_context["reply"] = reply
                     e_context.action = EventAction.BREAK_PASS
