@@ -174,7 +174,7 @@ class sunoplayer(Plugin):
         else:
             logger.info("No LRC files found in the output directory.")
 
-    def is_valid_file(self, file_path, min_size=512*1024):  # 500KB
+    def is_valid_file(self, file_path, min_size=100*1024):  # 100KB
         """Check if the file exists and is greater than a given minimum size in bytes."""
         return os.path.exists(file_path) and os.path.getsize(file_path) > min_size
 
