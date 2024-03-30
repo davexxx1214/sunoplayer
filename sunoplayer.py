@@ -144,7 +144,7 @@ class sunoplayer(Plugin):
             if self.is_valid_file(mp3_file_path):
                 logger.info("The MP3 file is valid.")
                 newfilepath = self.rename_file(mp3_file_path, prompt)
-                rt = ReplyType.VOICE
+                rt = ReplyType.FILE
                 rc = newfilepath
 
             else:
