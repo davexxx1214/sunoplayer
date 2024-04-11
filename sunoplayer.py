@@ -145,14 +145,21 @@ class sunoplayer(Plugin):
 
             for mp3_file_path in mp3_files:
                 if self.is_valid_file(mp3_file_path):
-                    logger.info("The MP3 file is valid.")
+                    logger.info(f"The MP3 file is valid. file count = {file_counter}")
                     newfilepath = self.rename_file(mp3_file_path, prompt, file_counter)
+                    if file_counter > 1:
+                        rt = ReplyType.VOICE
+                        rc = newfilepath
+                        reply = Reply(rt, rc)
+                        e_context["reply"] = reply
+                        e_context.action = EventAction.BREAK_PASS
+                    else:
+                        rt = ReplyType.VOICE
+                        rc = newfilepath
+                        self.send_reply(rc, e_context, rt)
+
                     file_counter += 1
-                    rt = ReplyType.VOICE
-                    rc = newfilepath
-                    reply = Reply(rt, rc)
-                    e_context["reply"] = reply
-                    e_context.action = EventAction.BREAK_PASS
+
 
                 else:
                     rt = ReplyType.TEXT
@@ -161,7 +168,7 @@ class sunoplayer(Plugin):
                     reply = Reply(rt, rc)
                     e_context["reply"] = reply
                     e_context.action = EventAction.BREAK_PASS
-                    
+
         else:
             logger.info("No MP3 files found in the output directory.")
             rt = ReplyType.TEXT
