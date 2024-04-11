@@ -150,16 +150,15 @@ class sunoplayer(Plugin):
                     file_counter += 1
                     rt = ReplyType.VOICE
                     rc = newfilepath
-                    self.send_reply(rc, e_context, rt)
 
                 else:
                     rt = ReplyType.TEXT
                     rc = "生成失败"
                     logger.info("The MP3 file is invalid or incomplete.")
-                    reply = Reply(rt, rc)
-                    e_context["reply"] = reply
-                    e_context.action = EventAction.BREAK_PASS
 
+                reply = Reply(rt, rc)
+                e_context["reply"] = reply
+                e_context.action = EventAction.BREAK_PASS
         else:
             logger.info("No MP3 files found in the output directory.")
             rt = ReplyType.TEXT
