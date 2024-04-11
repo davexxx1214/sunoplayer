@@ -140,21 +140,25 @@ class sunoplayer(Plugin):
         # 查找 output_dir 中的 mp3 文件，这里假设每次调用只产生一个 mp3
         mp3_files = glob(os.path.join(output_dir, '*.mp3'))
         if mp3_files:
-            mp3_file_path = mp3_files[0]
-            if self.is_valid_file(mp3_file_path):
-                logger.info("The MP3 file is valid.")
-                newfilepath = self.rename_file(mp3_file_path, prompt)
-                rt = ReplyType.VOICE
-                rc = newfilepath
+                
+            file_counter = 1
 
-            else:
-                rt = ReplyType.TEXT
-                rc = "生成失败"
-                logger.info("The MP3 file is invalid or incomplete.")
+            for mp3_file_path in mp3_files:
+                if self.is_valid_file(mp3_file_path):
+                    logger.info("The MP3 file is valid.")
+                    newfilepath = self.rename_file(mp3_file_path, prompt, file_counter)
+                    file_counter += 1
+                    rt = ReplyType.VOICE
+                    rc = newfilepath
 
-            reply = Reply(rt, rc)
-            e_context["reply"] = reply
-            e_context.action = EventAction.BREAK_PASS
+                else:
+                    rt = ReplyType.TEXT
+                    rc = "生成失败"
+                    logger.info("The MP3 file is invalid or incomplete.")
+
+                reply = Reply(rt, rc)
+                e_context["reply"] = reply
+                e_context.action = EventAction.BREAK_PASS
         else:
             logger.info("No MP3 files found in the output directory.")
             rt = ReplyType.TEXT
@@ -207,7 +211,7 @@ class sunoplayer(Plugin):
         # reply的发送步骤
         return channel._send_reply(context, rd)
     
-    def rename_file(self, filepath, prompt):
+    def rename_file(self, filepath, prompt, file_counter):
         # 提取目录路径和扩展名
         dir_path, filename = os.path.split(filepath)
         file_ext = os.path.splitext(filename)[1]
@@ -218,7 +222,7 @@ class sunoplayer(Plugin):
         content_prefix = cleaned_content[:10]
                 
         # 组装新的文件名
-        new_filename = f"{content_prefix}"
+        new_filename = f"{content_prefix}-{file_counter}"
 
         # 拼接回完整的新文件路径
         new_filepath = os.path.join(dir_path, new_filename + file_ext)
