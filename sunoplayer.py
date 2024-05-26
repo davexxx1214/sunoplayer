@@ -9,7 +9,6 @@ from common.log import logger
 from common.tmp_dir import TmpDir
 
 import os
-import uuid
 from suno import SongsGen
 import os
 import uuid
@@ -97,7 +96,7 @@ class sunoplayer(Plugin):
                     except Exception as e:
                         logger.error("create song error: {}".format(e))
                         rt = ReplyType.TEXT
-                        rc = "服务暂不可用,可能是某些词汇没有通过安全审查"
+                        rc = "服务暂不可用"
                         reply = Reply(rt, rc)
                         e_context["reply"] = reply
                         e_context.action = EventAction.BREAK_PASS
