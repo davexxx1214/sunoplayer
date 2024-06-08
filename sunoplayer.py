@@ -18,7 +18,7 @@ from glob import glob
     name="sunoplayer",
     desire_priority=2,
     desc="A plugin to call suno API",
-    version="0.0.1",
+    version="0.1.0",
     author="davexxx",
 )
 
@@ -45,6 +45,7 @@ class sunoplayer(Plugin):
             self.show_lyc = self.config.get("show_lyc",False)
             self.suno_prefix = self.config.get("suno_prefix", "suno")
             self.custom_suno_prefix = self.config.get("custom_suno_prefix", "custom")
+            self.instrumental_prefix = self.config.get("instrumental_prefix", "instrumental")
 
             # 初始化成功日志
             logger.info("[sunoplayer] inited.")
@@ -68,6 +69,7 @@ class sunoplayer(Plugin):
                     logger.info(f"suno prompt = : {prompt}")
                     try:
                         custom = False
+                        instrumental = False
                         self.call_suno_service(prompt,custom, e_context)
                     except Exception as e:
                         logger.error("create song error: {}".format(e))
@@ -92,6 +94,7 @@ class sunoplayer(Plugin):
                     logger.info(f"custom suno prompt =  {prompt}")
                     try:
                         custom = True
+                        instrumental = False
                         self.call_suno_service(prompt, custom, e_context)
                     except Exception as e:
                         logger.error("create song error: {}".format(e))
@@ -105,9 +108,35 @@ class sunoplayer(Plugin):
                     reply = Reply(type=ReplyType.TEXT, content= tip)
                     e_context["reply"] = reply
                     e_context.action = EventAction.BREAK_PASS
-                
 
-    def call_suno_service(self, prompt, custom, e_context):
+
+            if content.startswith(self.instrumental_prefix):
+                # Call new function to handle search operation
+                pattern = self.instrumental_prefix + r"\s(.+)"
+                match = re.match(pattern, content)
+                if match: ##   匹配上了custom的指令
+                    logger.info("calling instrumental suno service")
+                    prompt = content[len(self.instrumental_prefix):].strip()
+                    logger.info(f"instrumental suno prompt =  {prompt}")
+                    try:
+                        custom = False
+                        instrumental = True
+                        self.call_suno_service(prompt, custom, instrumental, e_context)
+                    except Exception as e:
+                        logger.error("create song error: {}".format(e))
+                        rt = ReplyType.TEXT
+                        rc = "服务暂不可用"
+                        reply = Reply(rt, rc)
+                        e_context["reply"] = reply
+                        e_context.action = EventAction.BREAK_PASS
+                else:
+                    tip = f"💡欢迎使用纯乐曲创作服务，指令格式为:\n\n{self.instrumental_prefix}+ 空格 + 对歌曲主题的描述(控制在30个字之内)\n例如:\n{self.suno_prefix} 一首浪漫的情歌\n或者:\n{self.suno_prefix} a blue cyber dream song"
+                    reply = Reply(type=ReplyType.TEXT, content= tip)
+                    e_context["reply"] = reply
+                    e_context.action = EventAction.BREAK_PASS
+
+
+    def call_suno_service(self, prompt, custom, instrumental, e_context):
         cookie_str =f'{self.cookie}'
 
         output_dir = self.generate_unique_output_directory(TmpDir().path())
@@ -130,10 +159,10 @@ class sunoplayer(Plugin):
 
         if custom:
             logger.info("custom mode")
-            i.save_songs(song_detail, output_dir, is_custom=True, title='歌词') 
+            i.save_songs(song_detail, output_dir,is_custom=True, title='歌词') 
         else:
-            logger.info("theme mode")
-            i.save_songs(song_detail, output_dir)
+            logger.info("theme/instrumental mode")
+            i.save_songs(song_detail, output_dir, make_instrumental=instrumental )
 
         # 查找 output_dir 中的 lrc 文件，这里我们不需要文件名
         lrc_file_path  = self.find_lrc_files(output_dir)
