@@ -135,47 +135,6 @@ class sunoplayer(Plugin):
             logger.info("theme mode")
             i.save_songs(song_detail, output_dir)
 
-
-        # 查找 output_dir 中的 mp3 文件，这里假设每次调用只产生一个 mp3
-        mp3_files = glob(os.path.join(output_dir, '*.mp3'))
-        if mp3_files:
-                
-            file_counter = 1
-
-            for mp3_file_path in mp3_files:
-                if self.is_valid_file(mp3_file_path):
-                    logger.info(f"The MP3 file is valid. file count = {file_counter}")
-                    newfilepath = self.rename_file(mp3_file_path, prompt, file_counter)
-                    if file_counter > 1:
-                        rt = ReplyType.VOICE
-                        rc = newfilepath
-                        reply = Reply(rt, rc)
-                        e_context["reply"] = reply
-                        e_context.action = EventAction.BREAK_PASS
-                    else:
-                        rt = ReplyType.VOICE
-                        rc = newfilepath
-                        self.send_reply(rc, e_context, rt)
-
-                    file_counter += 1
-
-
-                else:
-                    rt = ReplyType.TEXT
-                    rc = "生成失败"
-                    logger.info("The MP3 file is invalid or incomplete.")
-                    reply = Reply(rt, rc)
-                    e_context["reply"] = reply
-                    e_context.action = EventAction.BREAK_PASS
-
-        else:
-            logger.info("No MP3 files found in the output directory.")
-            rt = ReplyType.TEXT
-            rc = "生成失败，服务不可用"
-            reply = Reply(rt, rc)
-            e_context["reply"] = reply
-            e_context.action = EventAction.BREAK_PASS
-
         # 查找 output_dir 中的 lrc 文件，这里我们不需要文件名
         lrc_file_path  = self.find_lrc_files(output_dir)
         if lrc_file_path :
@@ -183,9 +142,67 @@ class sunoplayer(Plugin):
             if(self.show_lyc):
                 msg = self.print_file_contents(lrc_file_path)
                 self.send_reply(msg, e_context)
-
         else:
             logger.info("No LRC files found in the output directory.")
+
+        # 查找 output_dir 中的 mp3 和 mp4 文件
+        mp3_files = glob(os.path.join(output_dir, '*.mp3'))
+        mp4_files = glob(os.path.join(output_dir, '*.mp4'))
+
+        file_counter = 1
+        total_files = len(mp3_files) + len(mp4_files)  # 总文件数
+
+        # 定义一个变量来存储最后的回复内容
+        final_reply = None
+
+        # 处理MP3文件
+        for mp3_file_path in mp3_files:
+            if self.is_valid_file(mp3_file_path):
+                logger.info(f"The MP3 file is valid. File count = {file_counter}")
+                newfilepath = self.rename_file(mp3_file_path, prompt, file_counter)
+                rt = ReplyType.VOICE
+                rc = newfilepath
+                self.send_reply(rc, e_context, rt)
+
+                # 仅在处理最后一个文件时设置最终回复
+                if file_counter == total_files:
+                    final_reply = Reply(rt, rc)
+
+            else:
+                logger.info("The MP3 file is invalid or incomplete.")
+                final_reply = Reply(ReplyType.TEXT, "生成失败")
+
+            file_counter += 1
+
+        # 处理MP4文件
+        for mp4_file_path in mp4_files:
+            if self.is_valid_file(mp4_file_path):
+                logger.info(f"The MP4 file is valid. File count = {file_counter}")
+                newfilepath = self.rename_file(mp4_file_path, prompt, file_counter)
+                rt = ReplyType.VIDEO
+                rc = newfilepath
+                self.send_reply(rc, e_context, rt)
+
+                # 仅在处理最后一个文件时设置最终回复
+                if file_counter == total_files:
+                    final_reply = Reply(rt, rc)
+
+            else:
+                logger.info("The MP4 file is invalid or incomplete.")
+                final_reply = Reply(ReplyType.TEXT, "生成失败")
+
+            file_counter += 1
+
+        # 如果不存在任何文件
+        if total_files == 0:
+            logger.info("No media files found in the output directory.")
+            final_reply = Reply(ReplyType.TEXT, "生成失败，服务不可用")
+
+        # 如果有最终的回复，设置结束处理逻辑
+        if final_reply:
+            e_context["reply"] = final_reply
+            e_context.action = EventAction.BREAK_PASS
+
 
     def is_valid_file(self, file_path, min_size=100*1024):  # 100KB
         """Check if the file exists and is greater than a given minimum size in bytes."""
