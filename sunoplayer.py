@@ -149,49 +149,32 @@ class sunoplayer(Plugin):
         mp3_files = glob(os.path.join(output_dir, '*.mp3'))
         mp4_files = glob(os.path.join(output_dir, '*.mp4'))
 
-        file_counter = 1
         total_files = len(mp3_files) + len(mp4_files)  # 总文件数
+        file_counter = 0  # 初始化文件计数器
 
         # 定义一个变量来存储最后的回复内容
         final_reply = None
 
-        # 处理MP3文件
-        for mp3_file_path in mp3_files:
-            if self.is_valid_file(mp3_file_path):
-                logger.info(f"The MP3 file is valid. File count = {file_counter}")
-                newfilepath = self.rename_file(mp3_file_path, prompt, file_counter)
-                rt = ReplyType.VOICE
+        # 合并文件列表，便于统一处理
+        all_files = mp3_files + mp4_files
+
+        # 处理所有文件
+        for file_path in all_files:
+            file_counter += 1  # 在循环开始时递增计数
+            if self.is_valid_file(file_path):
+                logger.info(f"File {file_path} is valid. File count = {file_counter}")
+                newfilepath = self.rename_file(file_path, prompt, file_counter)
+                rt = ReplyType.VOICE if file_path.endswith('.mp3') else ReplyType.VIDEO
                 rc = newfilepath
                 self.send_reply(rc, e_context, rt)
 
                 # 仅在处理最后一个文件时设置最终回复
                 if file_counter == total_files:
                     final_reply = Reply(rt, rc)
-
             else:
-                logger.info("The MP3 file is invalid or incomplete.")
+                logger.info(f"File {file_path} is invalid or incomplete.")
                 final_reply = Reply(ReplyType.TEXT, "生成失败")
-
-            file_counter += 1
-
-        # 处理MP4文件
-        for mp4_file_path in mp4_files:
-            if self.is_valid_file(mp4_file_path):
-                logger.info(f"The MP4 file is valid. File count = {file_counter}")
-                newfilepath = self.rename_file(mp4_file_path, prompt, file_counter)
-                rt = ReplyType.VIDEO
-                rc = newfilepath
-                self.send_reply(rc, e_context, rt)
-
-                # 仅在处理最后一个文件时设置最终回复
-                if file_counter == total_files:
-                    final_reply = Reply(rt, rc)
-
-            else:
-                logger.info("The MP4 file is invalid or incomplete.")
-                final_reply = Reply(ReplyType.TEXT, "生成失败")
-
-            file_counter += 1
+                break  # 如果某个文件无效，则跳出循环
 
         # 如果不存在任何文件
         if total_files == 0:
