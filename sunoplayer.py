@@ -183,7 +183,6 @@ class sunoplayer(Plugin):
 
         # 如果有最终的回复，设置结束处理逻辑
         if final_reply:
-            e_context["reply"] = final_reply
             e_context.action = EventAction.BREAK_PASS
 
 
