@@ -70,7 +70,7 @@ class sunoplayer(Plugin):
                     try:
                         custom = False
                         instrumental = False
-                        self.call_suno_service(prompt,custom, e_context)
+                        self.call_suno_service(prompt,custom, instrumental, e_context)
                     except Exception as e:
                         logger.error("create song error: {}".format(e))
                         rt = ReplyType.TEXT
@@ -95,7 +95,7 @@ class sunoplayer(Plugin):
                     try:
                         custom = True
                         instrumental = False
-                        self.call_suno_service(prompt, custom, e_context)
+                        self.call_suno_service(prompt, custom, instrumental, e_context)
                     except Exception as e:
                         logger.error("create song error: {}".format(e))
                         rt = ReplyType.TEXT
